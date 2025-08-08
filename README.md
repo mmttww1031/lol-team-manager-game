@@ -1,0 +1,65 @@
+Lol Manager - 峽谷經理人 🏆
+一個基於瀏覽器的單檔案 HTML 網頁遊戲，讓你體驗成為一名《英雄聯盟》電競戰隊經理的旅程。
+
+A single-file HTML web game that lets you experience the journey of being a League of Legends esports team manager.
+
+<!-- [在此處插入遊戲截圖，展示戰隊管理介面] -->
+<!-- [Insert a screenshot of the game's roster management screen here] -->
+關於遊戲 (About The Game)
+《峽谷經理人》是一款輕量級的策略經營模擬遊戲。你將扮演一名戰隊經理，透過抽卡（選秀）招募選手，組建一支包含上路、打野、中路、下路和輔助的夢幻隊伍。
+
+你的目標是帶領這支隊伍，從默默無聞的丙級聯賽開始，一路過關斬將，經歷乙級和甲級聯賽的洗禮，最終在世界總決賽的舞台上，奪得屬於你的冠軍榮耀！
+
+遊戲特色 (Features)
+🕹️ 點開即玩 (Zero Installation): 整個遊戲僅包含在一個 HTML 檔案中。無需安裝、無需伺服器，下載後用瀏覽器打開即可遊玩。
+🃏 Gacha 抽卡系統 (Gacha System): 從 C、R、SR 到 SSR 四種稀有度的卡池中招募選手，每一位傳奇選手都基於真實 LCK 選手的巔峰年份設計。
+📈 選手養成 (Player Progression): 投入金幣訓練你的選手，提升他們的能力值和綜合評分 (OVR)。看著你的菜鳥新秀成長為世界級巨星！
+🏆 完整的聯賽階梯 (Full League Ladder): 挑戰從丙級到世界賽，共 34 個精心設計的關卡，難度曲線平滑且充滿挑戰。
+📜 沉浸式劇情 (Immersive Story): 每一場關鍵勝利都會解鎖一段劇情文字，讓你親身體驗從網咖隊伍到世界冠軍的史詩級旅程。
+🧠 策略性比賽 (Strategic Matches): 在賽前選擇「前期進攻」、「穩健發育」或「資源掠奪」戰術，與對手進行博弈。
+🔄 重複挑戰 (Grindable Content): 可以重複挑戰已擊敗的對手來賺取金幣，為你的隊伍提供成長資源。
+💾 本地存檔 (Local Persistence): 你的所有進度（選手、資源、聯賽狀態）都會自動儲存在你的瀏覽器中。
+如何遊玩 (How to Play)
+下載 canyon_manager.html 檔案。
+使用任何現代網頁瀏覽器（如 Chrome, Firefox, Edge）打開該檔案。
+開始你的傳奇經理人之路！
+遊戲機制詳解 (Game Mechanics)
+選手系統 (Player System)
+選手是遊戲的核心。每位選手都擁有以下屬性：
+
+稀有度 (Rarity): C, R, SR, SSR。稀有度越高，基礎能力和成長上限越高。
+屬性 (Stats):
+OP (操作): 影響選手的基礎表現。
+GS (意識): 影響隊伍的整體節奏和資源獲取。
+MT (心態): 影響隊伍在逆風時的表現。
+等級 (Level): 你可以透過花費金幣來提升選手等級，增強其所有屬性。
+C級上限: 10級
+R級上限: 20級
+SR級上限: 30級
+SSR級上限: 40級
+招募系統 (Recruitment System)
+招募類型 (Type)	花費 (Cost)	C級機率	R級機率	SR級機率	SSR級機率
+普通探員	1000 金幣	90%	10%	0%	0%
+頂級星探	500 鑽石	0%	60%	35%	5%
+提示: 當你抽到已擁有的選手時，他會被自動轉換為資源作為補償！
+聯賽與劇情 (Leagues & Story)
+你需要依序挑戰四個主要聯賽，每一場首次勝利都會推進你的隊伍故事。
+
+丙級聯賽 (Bronze League): 10 個關卡
+乙級聯賽 (Silver League): 10 個關卡
+甲級聯賽 (Gold League): 10 個關卡
+世界總決賽 (World Championship): 4 個關卡
+技術堆疊 (Technology Stack)
+Vanilla HTML
+Vanilla CSS
+Vanilla JavaScript (ES6)
+本專案特意不使用任何前端框架或函式庫（除了引入 Google Fonts），旨在展示使用原生 Web 技術可以實現的遊戲體驗。
+
+未來展望 (Future Development)
+這個專案還有很大的擴展潛力，包括：
+
+教練與分析師系統: 招募教練團隊來提供額外加成。
+選手協同效應 (Synergy): 特定選手組合上場時觸發特殊效果。
+更豐富的選手技能: 為 SR/SSR 選手設計更具影響力的被動技能。
+UI/UX 優化: 加入更多動畫和視覺回饋。
+裝備系統: 為選手配置裝備以微調屬性。
