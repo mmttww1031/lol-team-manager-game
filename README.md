@@ -1,10 +1,3 @@
-Lol Manager - 峽谷經理人 🏆
-一個基於瀏覽器的單檔案 HTML 網頁遊戲，讓你體驗成為一名《英雄聯盟》電競戰隊經理的旅程。
-
-A single-file HTML web game that lets you experience the journey of being a League of Legends esports team manager.
-
-<!-- [在此處插入遊戲截圖，展示戰隊管理介面] -->
-<!-- [Insert a screenshot of the game's roster management screen here] -->
 關於遊戲 (About The Game)
 《峽谷經理人》是一款輕量級的策略經營模擬遊戲。你將扮演一名戰隊經理，透過抽卡（選秀）招募選手，組建一支包含上路、打野、中路、下路和輔助的夢幻隊伍。
 
