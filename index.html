@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canyon Manager - 峽谷經理人</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+        :root {
+            --color-bg: #111827;
+            --color-bg-secondary: #1F2937;
+            --color-border: #374151;
+            --color-text: #E5E7EB;
+            --color-text-dim: #9CA3AF;
+            --color-accent: #38BDF8;
+            --color-gold: #FBBF24;
+            --color-purple: #A78BFA;
+            --color-blue: #60A5FA;
+            --color-grey: #6B7280;
+            --color-red: #F87171;
+            --color-green: #4ADE80;
+
+            --rarity-c-glow: #9CA3AF;
+            --rarity-r-glow: #60A5FA;
+            --rarity-sr-glow: #A78BFA;
+            --rarity-ssr-glow: #FBBF24;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 95vh;
+            max-height: 800px;
+            background-color: var(--color-bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--color-border);
+            display: flex;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* --- Navigation --- */
+        #nav-bar {
+            width: 200px;
+            background-color: var(--color-bg);
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #nav-header {
+            padding: 0 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #team-name {
+            font-size: 1.2em;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        
+        #team-name:hover {
+            color: var(--color-accent);
+        }
+
+        .nav-button {
+            width: 100%;
+            padding: 15px 20px;
+            background: none;
+            border: none;
+            color: var(--color-text-dim);
+            text-align: left;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-button:hover {
+            background-color: var(--color-bg-secondary);
+            color: var(--color-text);
+        }
+        
+        .nav-button.active {
+            color: var(--color-accent);
+            font-weight: 700;
+            border-left-color: var(--color-accent);
+        }
+
+        #resource-bar {
+            margin-top: auto;
+            padding: 20px;
+        }
+
+        .resource-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .resource-item span {
+            margin-left: 10px;
+            font-weight: 500;
+        }
+        
+        #reset-game-btn {
+            margin: 10px 20px 0 20px;
+            padding: 10px;
+            color: var(--color-red);
+            font-weight: 700;
+            border: 1px solid var(--color-red);
+            border-radius: 6px;
+            background: none;
+            text-align: center;
+            cursor: pointer;
+        }
+        #reset-game-btn:hover {
+            background-color: rgba(248, 113, 113, 0.1);
+        }
+
+        /* --- Main Content --- */
+        #main-content {
+            flex-grow: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        
+        .screen {
+            display: none;
+        }
+        
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .screen-header {
+            font-size: 1.8em;
+            font-weight: 700;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--color-border);
+            margin-bottom: 20px;
+        }
+
+        /* --- Player Card --- */
+        .player-card {
+            background-color: #2a374a;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-height: 275px;
+        }
+        
+        .player-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 15px 3px var(--glow-color);
+            opacity: 0.8;
+            pointer-events: none;
+        }
+        
+        .player-card.rarity-C { --glow-color: var(--rarity-c-glow); }
+        .player-card.rarity-R { --glow-color: var(--rarity-r-glow); }
+        .player-card.rarity-SR { --glow-color: var(--rarity-sr-glow); animation: pulse-sr 3s infinite; }
+        .player-card.rarity-SSR { --glow-color: var(--rarity-ssr-glow); animation: pulse-ssr 2s infinite; }
+        
+        @keyframes pulse-sr {
+            0% { box-shadow: inset 0 0 15px 3px var(--rarity-sr-glow); }
+            50% { box-shadow: inset 0 0 25px 5px var(--rarity-sr-glow); }
+            100% { box-shadow: inset 0 0 15px 3px var(--rarity-sr-glow); }
+        }
+
+        @keyframes pulse-ssr {
+            0% { box-shadow: inset 0 0 20px 4px var(--rarity-ssr-glow); }
+            50% { box-shadow: inset 0 0 30px 8px var(--rarity-ssr-glow); }
+            100% { box-shadow: inset 0 0 20px 4px var(--rarity-ssr-glow); }
+        }
+
+
+        .player-card .position {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-weight: 700;
+            font-size: 0.9em;
+            background-color: rgba(0,0,0,0.4);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .player-card .ovr {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-weight: 700;
+            font-size: 1.2em;
+        }
+        
+        .rarity-C .ovr { color: var(--rarity-c-glow); }
+        .rarity-R .ovr { color: var(--rarity-r-glow); }
+        .rarity-SR .ovr { color: var(--rarity-sr-glow); }
+        .rarity-SSR .ovr { color: var(--rarity-ssr-glow); }
+
+        .player-card .name {
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-top: 25px;
+        }
+        
+        .player-card .level {
+            font-size: 0.8em;
+            color: var(--color-text-dim);
+        }
+
+        .player-card .year {
+            font-size: 0.8em;
+            color: var(--color-text-dim);
+            margin-bottom: 8px;
+        }
+
+        .player-card .stats {
+            display: flex;
+            justify-content: space-around;
+            font-size: 0.8em;
+            margin-top: 10px;
+        }
+
+        .player-card .trait {
+            margin-top: 10px;
+            padding: 6px;
+            background-color: rgba(0,0,0,0.2);
+            border-radius: 4px;
+            font-size: 0.75em;
+            min-height: 35px;
+        }
+        
+        .player-card .trait .trait-name {
+            font-weight: 700;
+        }
+        
+        .trait.positive { color: var(--color-green); }
+        .trait.negative { color: var(--color-red); }
+
+        .player-card .rarity-label {
+            display: inline-block;
+            margin: 6px auto;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.8em;
+            border: 1px solid rgba(0,0,0,0.2);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .rarity-label.rarity-C { background-color: var(--rarity-c-glow); color: var(--color-bg); }
+        .rarity-label.rarity-R { background-color: var(--rarity-r-glow); color: white; }
+        .rarity-label.rarity-SR { background-color: var(--rarity-sr-glow); color: white; }
+        .rarity-label.rarity-SSR { background-color: var(--rarity-ssr-glow); color: var(--color-bg); }
+
+
+        /* --- Roster Screen --- */
+        #roster-screen .team-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: var(--color-bg);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        #roster-screen .team-info h3 {
+            font-size: 1.2em;
+        }
+        
+        #roster-screen .main-roster, #roster-screen .bench {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        
+        .roster-placeholder {
+            border: 2px dashed var(--color-border);
+            border-radius: 8px;
+            min-height: 275px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--color-text-dim);
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+        
+        .player-card-wrapper {
+            position: relative;
+        }
+        
+        .roster-actions {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+        }
+        
+        .roster-action-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 0.8em;
+        }
+        
+        .roster-action-btn:hover {
+            background-color: var(--color-accent);
+        }
+        
+        .roster-action-btn:first-child { border-bottom-left-radius: 8px; }
+        .roster-action-btn:last-child { border-bottom-right-radius: 8px; }
+        .roster-action-btn:disabled { background-color: var(--color-border); cursor: not-allowed; }
+
+        /* --- Recruit Screen --- */
+        #recruit-screen {
+            text-align: center;
+        }
+        
+        .recruit-option {
+            background-color: var(--color-bg);
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .recruit-option:hover {
+            transform: translateY(-5px);
+            border-color: var(--color-accent);
+        }
+        
+        .recruit-option h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        #recruit-result {
+            margin-top: 30px;
+            min-height: 250px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* Card Reveal Animation */
+        .card-reveal {
+            perspective: 1000px;
+        }
+        .card-reveal .player-card {
+            transform-style: preserve-3d;
+            animation: flip-in 1s ease, reveal-glow 1.5s ease 0.8s;
+        }
+
+        @keyframes flip-in {
+            from { transform: rotateY(180deg) scale(0.8); }
+            to { transform: rotateY(0deg) scale(1); }
+        }
+
+        @keyframes reveal-glow {
+             0% { box-shadow: inset 0 0 15px 3px var(--glow-color), 0 0 10px 2px var(--glow-color); }
+            50% { box-shadow: inset 0 0 30px 8px var(--glow-color), 0 0 30px 8px var(--glow-color); }
+            100% { box-shadow: inset 0 0 15px 3px var(--glow-color), 0 0 10px 2px var(--glow-color); }
+        }
+
+
+        /* --- League Screen --- */
+        .league-opponent {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background-color: var(--color-bg);
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .play-match-btn.replay-btn {
+            background-color: var(--color-grey);
+            color: var(--color-text);
+        }
+        .play-match-btn.replay-btn:hover {
+            background-color: var(--color-border);
+        }
+
+        .play-match-btn {
+            padding: 10px 20px;
+            background-color: var(--color-accent);
+            color: var(--color-bg);
+            border: none;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .play-match-btn:hover {
+            background-color: #67cff7;
+        }
+        
+        .play-match-btn:disabled {
+            background-color: var(--color-border);
+            color: var(--color-text-dim);
+            cursor: not-allowed;
+        }
+        
+        #all-leagues-cleared {
+            text-align: center;
+            padding: 40px;
+        }
+
+        /* --- Modals --- */
+        .modal-backdrop {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .modal-content {
+            background-color: var(--color-bg-secondary);
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            animation: zoomIn 0.3s ease;
+        }
+        
+        @keyframes zoomIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        #match-result-modal .result-title {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        #match-result-modal .result-title.victory { color: var(--color-green); }
+        #match-result-modal .result-title.defeat { color: var(--color-red); }
+        
+        #match-result-modal .result-score {
+            font-size: 1.5em;
+            color: var(--color-text-dim);
+            margin-bottom: 20px;
+        }
+        
+        #match-result-modal .result-rewards {
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        #match-result-modal .story-text {
+            font-style: italic;
+            color: var(--color-text-dim);
+            margin-top: 20px;
+            padding: 10px;
+            border-top: 1px solid var(--color-border);
+        }
+        
+        .modal-close-btn {
+            margin-top: 20px;
+            padding: 12px 25px;
+            background-color: var(--color-accent);
+            color: var(--color-bg);
+            border: none;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        
+        .tactic-selection {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tactic-btn {
+            padding: 10px;
+            border: 1px solid var(--color-border);
+            background: none;
+            color: var(--color-text);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .tactic-btn:hover {
+            background-color: var(--color-border);
+        }
+        
+        .tactic-btn.selected {
+            background-color: var(--color-accent);
+            color: var(--color-bg);
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <nav id="nav-bar">
+            <div id="nav-header">
+                <h2 id="team-name">My Team</h2>
+            </div>
+            <button class="nav-button active" data-screen="roster">戰隊管理</button>
+            <button class="nav-button" data-screen="league">職業聯賽</button>
+            <button class="nav-button" data-screen="recruit">選手招募</button>
+            
+            <div id="resource-bar">
+                 <div class="resource-item" title="金幣 (Gold)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-gold);"><circle cx="12" cy="12" r="8"></circle><line x1="3" y1="12" x2="21" y2="12"></line><line x1="12" y1="3" x2="12" y2="21"></line></svg>
+                    <span id="gold-amount">10000</span>
+                </div>
+                <div class="resource-item" title="鑽石 (Diamonds)">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-accent);"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                    <span id="diamond-amount">500</span>
+                </div>
+            </div>
+            <button id="reset-game-btn" class="nav-button">重設記錄</button>
+        </nav>
+
+        <main id="main-content">
+            <!-- Roster Screen -->
+            <div id="roster-screen" class="screen active">
+                <header class="screen-header">戰隊管理</header>
+                <div class="team-info">
+                    <h3>總體評分 (Total OVR)</h3>
+                    <h3 id="team-ovr">0</h3>
+                </div>
+                
+                <h3 style="margin: 20px 0 10px;">主力陣容 (Main Roster)</h3>
+                <div id="main-roster-slots" class="main-roster"></div>
+                
+                <h3 style="margin: 30px 0 10px;">替補席 (Bench)</h3>
+                <div id="bench-slots" class="bench"></div>
+            </div>
+
+            <!-- League Screen -->
+            <div id="league-screen" class="screen">
+                <header id="league-header" class="screen-header">聯賽</header>
+                <div id="league-opponents"></div>
+            </div>
+
+            <!-- Recruit Screen -->
+            <div id="recruit-screen" class="screen">
+                <header class="screen-header">選手招募</header>
+                <div id="recruit-basic" class="recruit-option">
+                    <h3>普通探員</h3>
+                    <p>花費: 1000 金幣</p>
+                    <p style="color: var(--color-text-dim); font-size: 0.9em;">有機會招募到 C 級或 R 級選手。</p>
+                </div>
+                <div id="recruit-premium" class="recruit-option">
+                    <h3>頂級星探</h3>
+                    <p>花費: 500 鑽石</p>
+                    <p style="color: var(--color-text-dim); font-size: 0.9em;">有更高機率獲得 R 級選手，並有機會出現 SR 或 SSR 級傳奇！</p>
+                </div>
+                
+                <div id="recruit-result">
+                    <p>在此處查看你招募到的新選手。</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Match Modal -->
+    <div id="match-modal" class="modal-backdrop">
+        <div class="modal-content">
+            <h2 id="match-modal-title">VS Team Fire</h2>
+            <p style="margin-bottom: 20px;">請選擇本場比賽的戰術方針：</p>
+            <div class="tactic-selection">
+                <button class="tactic-btn" data-tactic="Aggressive Early">前期進攻</button>
+                <button class="tactic-btn" data-tactic="Safe Farming">穩健發育</button>
+                <button class="tactic-btn" data-tactic="Resource Control">資源掠奪</button>
+            </div>
+            <button id="start-match-btn" class="modal-close-btn" disabled>開始比賽</button>
+        </div>
+    </div>
+    
+    <!-- Match Result Modal -->
+    <div id="match-result-modal" class="modal-backdrop">
+        <div class="modal-content">
+            <h2 id="result-title" class="result-title"></h2>
+            <p id="result-score" class="result-score"></p>
+            <p><strong>MVP:</strong> <span id="result-mvp"></span></p>
+            <div class="result-rewards">
+                <h4>獲得獎勵:</h4>
+                <p id="result-rewards-text"></p>
+            </div>
+            <div id="story-text" class="story-text"></div>
+            <button id="close-result-modal-btn" class="modal-close-btn">確認</button>
+        </div>
+    </div>
+
+    <script>
+        const DB = {
+            C: [
+                { id: 'c01', name: 'Ji-hoon', year: '', pos: 'TOP', ovr: 58, op: 65, gs: 50, mt: 59, trait: { key: '[個人主義]', desc: '意識(GS)屬性額外 -5。', type: 'negative' } },
+                { id: 'c02', name: 'Stone', year: '', pos: 'TOP', ovr: 57, op: 55, gs: 58, mt: 60, trait: { key: '[英雄池淺]', desc: '綜合評分(OVR)永久 -3。', type: 'negative' } },
+                { id: 'c03', name: 'Rush', year: '', pos: 'JGL', ovr: 59, op: 68, gs: 52, mt: 57, trait: { key: '[莽撞]', desc: '心態(MT)屬性額外 -5。', type: 'negative' } },
+                { id: 'c04', name: 'Forest', year: '', pos: 'JGL', ovr: 56, op: 54, gs: 63, mt: 55, trait: { key: '[和平主義]', desc: '操作(OP)屬性額外 -5。', type: 'negative' } },
+                { id: 'c05', name: 'Echo', year: '', pos: 'MID', ovr: 55, op: 58, gs: 55, mt: 58, trait: { key: '[反應遲鈍]', desc: '操作(OP)屬性額外 -5。', type: 'negative' } },
+                { id: 'c06', name: 'Min-jun', year: '', pos: 'MID', ovr: 54, op: 56, gs: 56, mt: 56, trait: { key: '[經驗不足]', desc: '在季後賽中，綜合評分(OVR) -5。', type: 'negative' } },
+                { id: 'c07', name: 'Trigger', year: '', pos: 'ADC', ovr: 60, op: 69, gs: 55, mt: 52, trait: { key: '[玻璃心]', desc: '當隊伍逆風時，心態(MT)屬性大幅降低。', type: 'negative' } },
+                { id: 'c08', name: 'Wave', year: '', pos: 'ADC', ovr: 58, op: 64, gs: 59, mt: 53, trait: { key: '[腦袋過熱]', desc: '連續勝利2場後，下一場比賽全屬性降低。', type: 'negative' } },
+                { id: 'c09', name: 'Sight', year: '', pos: 'SUP', ovr: 56, op: 50, gs: 65, mt: 57, trait: { key: '[操作苦手]', desc: '操作(OP)屬性額外 -8。', type: 'negative' } },
+                { id: 'c10', name: 'Hesitate', year: '', pos: 'SUP', ovr: 55, op: 52, gs: 57, mt: 61, trait: { key: '[猶豫]', desc: '當隊伍採用「前期進攻」戰術時，全隊戰力微幅下降。', type: 'negative' } },
+            ],
+            R: [
+                { id: 'r01', name: 'Guard', year: '', pos: 'TOP', ovr: 72, op: 68, gs: 73, mt: 75, trait: { key: '[藍領]', desc: '意識(GS)屬性額外 +3。', type: 'positive' } },
+                { id: 'r02', name: 'Edge', year: '', pos: 'TOP', ovr: 73, op: 76, gs: 70, mt: 72, trait: { key: '[鬥士]', desc: '操作(OP) +4, 意識(GS) -2。', type: 'neutral' } },
+                { id: 'r03', name: 'Path', year: '', pos: 'JGL', ovr: 74, op: 70, gs: 78, mt: 73, trait: { key: '[控圖]', desc: '意識(GS)屬性額外 +3。', type: 'positive' } },
+                { id: 'r04', name: 'Solid', year: '', pos: 'JGL', ovr: 72, op: 72, gs: 72, mt: 72, trait: { key: '[穩定]', desc: '該選手的屬性不會因為逆風而下降。', type: 'positive' } },
+                { id: 'r05', name: 'Control', year: '', pos: 'MID', ovr: 73, op: 70, gs: 77, mt: 74, trait: { key: '[法師]', desc: '意識(GS) +4, 操作(OP) -2。', type: 'neutral' } },
+                { id: 'r06', name: 'Focus', year: '', pos: 'MID', ovr: 71, op: 74, gs: 70, mt: 70, trait: { key: '[基本功]', desc: '全屬性 +1。', type: 'positive' } },
+                { id: 'r07', name: 'Rhythm', year: '', pos: 'ADC', ovr: 74, op: 77, gs: 75, mt: 70, trait: { key: '[神射手]', desc: '操作(OP)屬性額外 +3。', type: 'positive' } },
+                { id: 'r08', name: 'Anchor', year: '', pos: 'ADC', ovr: 72, op: 70, gs: 71, mt: 78, trait: { key: '[老將]', desc: '心態(MT)屬性額外 +3。', type: 'positive' } },
+                { id: 'r09', name: 'Nexus', year: '', pos: 'SUP', ovr: 73, op: 68, gs: 79, mt: 74, trait: { key: '[大腦]', desc: '意識(GS)屬性額外 +4。', type: 'positive' } },
+                { id: 'r10', name: 'Shield', year: '', pos: 'SUP', ovr: 71, op: 67, gs: 72, mt: 77, trait: { key: '[守護者]', desc: '心態(MT)屬性額外 +4。', type: 'positive' } },
+            ],
+            SR: [
+                { id: 'sr01', name: 'Smeb', year: '2016', pos: 'TOP', ovr: 92, op: 95, gs: 90, mt: 91, trait: { key: '[The King]', desc: '該選手的綜合評分(OVR)永久 +5。', type: 'positive' } },
+                { id: 'sr02', name: 'Peanut', year: '2017', pos: 'JGL', ovr: 90, op: 94, gs: 92, mt: 84, trait: { key: '[侵略如火]', desc: '當隊伍採用「前期進攻」戰術時，全隊的「操作(OP)」屬性 +5。', type: 'positive' } },
+                { id: 'sr03', name: 'Rookie', year: '2018', pos: 'MID', ovr: 94, op: 97, gs: 93, mt: 92, trait: { key: '[線上壓制]', desc: '比賽開始時，直接降低對位中路選手 5 點綜合評分。', type: 'positive' } },
+                { id: 'sr04', name: 'Uzi', year: '2018', pos: 'ADC', ovr: 93, op: 99, gs: 88, mt: 92, trait: { key: '[四保一]', desc: '隊伍中其他四名選手的綜合評分降低 1 點，但該選手的綜合評分提升 10 點。', type: 'positive' } },
+                { id: 'sr05', name: 'Mata', year: '2014', pos: 'SUP', ovr: 91, op: 85, gs: 99, mt: 90, trait: { key: '[視野掌控]', desc: '全隊的「意識(GS)」屬性 +3。', type: 'positive' } },
+            ],
+            SSR: [
+                { id: 'ssr01', name: 'Faker', year: '2015', pos: 'MID', ovr: 98, op: 97, gs: 98, mt: 99, trait: { key: '[不死的魔王]', desc: '全隊在所有比賽中，獲得一個永久的 5% 戰力優勢。', type: 'positive' } },
+                { id: 'ssr02', name: 'Canyon', year: '2020', pos: 'JGL', ovr: 97, op: 96, gs: 99, mt: 95, trait: { key: '[峽谷支配者]', desc: '在「戰術方針」的克制選擇中，你的選擇有極高機率視為「克制成功」。', type: 'positive' } },
+                { id: 'ssr03', name: 'TheShy', year: '2018', pos: 'TOP', ovr: 96, op: 100, gs: 90, mt: 98, trait: { key: '[天神下凡]', desc: '比賽開始時，直接降低對位上路選手 10 點「操作(OP)」和 10 點「心態(MT)」屬性。', type: 'positive' } },
+            ]
+        };
+
+        const LEAGUES = {
+            'Bronze': { name: '丙級聯賽', opponents: [
+                { id: 'b01', name: '網咖冠軍', ovr: 280, tactic: 'Aggressive Early' }, { id: 'b02', name: '城市挑戰者', ovr: 290, tactic: 'Safe Farming' },
+                { id: 'b03', name: '鋼鐵之心', ovr: 300, tactic: 'Resource Control' }, { id: 'b04', name: '閃電狼蛛', ovr: 310, tactic: 'Aggressive Early' },
+                { id: 'b05', name: '火焰之拳', ovr: 325, tactic: 'Safe Farming' }, { id: 'b06', name: '旋風衝鋒', ovr: 340, tactic: 'Resource Control' },
+                { id: 'b07', name: '巨石守衛', ovr: 355, tactic: 'Safe Farming' }, { id: 'b08', name: '暗影獵手', ovr: 370, tactic: 'Aggressive Early' },
+                { id: 'b09', name: '晉級守門員', ovr: 385, tactic: 'Resource Control' }, { id: 'b10', name: '丙級聯賽冠軍', ovr: 400, tactic: 'Aggressive Early' }
+            ]},
+            'Silver': { name: '乙級聯賽', opponents: [
+                { id: 's01', name: 'Cyber Wolves', ovr: 410, tactic: 'Resource Control' }, { id: 's02', name: 'Aqua Phoenix', ovr: 425, tactic: 'Aggressive Early' },
+                { id: 's03', name: 'Titan Guards', ovr: 440, tactic: 'Safe Farming' }, { id: 's04', name: 'Void Runners', ovr: 455, tactic: 'Aggressive Early' },
+                { id: 's05', name: 'Solaris United', ovr: 470, tactic: 'Resource Control' }, { id: 's06', name: 'Giga Gamers', ovr: 485, tactic: 'Safe Farming' },
+                { id: 's07', name: 'Mirage Force', ovr: 500, tactic: 'Aggressive Early' }, { id: 's08', name: 'Omega Squad', ovr: 515, tactic: 'Resource Control' },
+                { id: 's09', name: '次級聯賽王者', ovr: 530, tactic: 'Safe Farming' }, { id: 's10', name: '乙級聯賽冠軍', ovr: 550, tactic: 'Aggressive Early' }
+            ]},
+            'Gold': { name: '甲級聯賽', opponents: [
+                { id: 'g01', name: 'Royal Knights', ovr: 560, tactic: 'Safe Farming' }, { id: 'g02', name: 'Abyssal Hunters', ovr: 575, tactic: 'Aggressive Early' },
+                { id: 'g03', name: 'Stormbringers', ovr: 590, tactic: 'Resource Control' }, { id: 'g04', name: 'Dragonborns', ovr: 605, tactic: 'Aggressive Early' },
+                { id: 'g05', name: 'Celestial Empire', ovr: 620, tactic: 'Safe Farming' }, { id: 'g06', name: 'Infinity Edge', ovr: 635, tactic: 'Resource Control' },
+                { id: 'g07', name: 'The Professionals', ovr: 650, tactic: 'Aggressive Early' }, { id: 'g08', name: 'Legacy Esports', ovr: 665, tactic: 'Safe Farming' },
+                { id: 'g09', name: '賽區頭號種子', ovr: 680, tactic: 'Resource Control' }, { id: 'g10', name: '甲級聯賽冠軍', ovr: 700, tactic: 'Aggressive Early' }
+            ]},
+             'Worlds': { name: '世界總決賽', opponents: [
+                { id: 'w01', name: '八強賽對手', ovr: 720, tactic: 'Resource Control' }, { id: 'w02', name: '四強賽勁敵', ovr: 750, tactic: 'Aggressive Early' },
+                { id: 'w03', name: '冠軍賽魔王', ovr: 780, tactic: 'Safe Farming' }, { id: 'w04', name: '最終傳奇', ovr: 820, tactic: 'Aggressive Early' }
+            ]}
+        };
+        
+        const STORY_TEXT = {
+            'b01': '你的第一場正式勝利！選手們都很興奮，但還沒有人注意到你們。', 'b02': '連勝！隊員間的默契似乎變好了一點。', 'b03': '三連勝！一個本地電競論壇上出現了討論你們的帖子，雖然只有幾條回覆。',
+            'b04': '又是一場勝利。你們的打法開始吸引到一些業餘分析師的注意。', 'b05': '擊敗了火焰之拳！他們是這個聯賽的小組熱門，這場勝利讓你們開始被人們認真對待。',
+            'b06': '你們的連勝還在繼續，現在你們是小組第一了！', 'b07': '一場艱難的勝利。對手頑強的防守給你們上了一課，但你們還是找到了突破口。',
+            'b08': '輕鬆取勝！選手們的自信心高漲，他們已經開始討論晉級後的打算了。', 'b09': '擊敗了守門員！這場勝利確保了你們的季後賽席位，離晉級只差最後一步！',
+            'b10': '丙級聯賽冠軍！你們做到了！你們晉級的消息在業餘電競圈裡引起了不小的轟動。真正的挑戰現在才要開始。',
+            's01': '歡迎來到乙級聯賽。這裡的隊伍明顯更有組織性，第一場勝利拿下的正是時候，穩固了隊員們的信心。', 's02': '這支隊伍的進攻性極強，但你們成功地應對了。你們的戰術彈性似乎比自己想的要好。',
+            's03': '一場漫長的運營局。你們的耐心得到了回報，這場勝利證明了你們不只會打架。', 's04': '連勝！一些乙級聯賽的評論員開始將你們稱為「最強黑馬」。',
+            's05': '擊敗了Solaris United！他們是上賽季的晉級熱門，這場勝利讓你們的聲望大增。', 's06': '一場膠著的比賽。你們的經濟一度落後，但憑藉一波關鍵團戰翻轉了局勢。',
+            's07': '你們的勢頭銳不可當，離季後賽席位越來越近了。', 's08': '這場勝利之後，已經有甲級聯賽的隊伍開始研究你們的比賽錄像了。',
+            's09': '你們擊敗了被認為是「次級聯賽最強」的隊伍！沒有人再敢質疑你們的實力。', 's10': '乙級聯賽冠軍！你們的名字已經開始出現在一些主流電競媒體的觀察名單上。甲級聯賽，我們來了！',
+            'g01': '這就是甲級聯賽！對手的實力非同凡響。這場艱難的勝利證明了你們也有在此立足的資格。', 'g02': '你們的打野選手在這場比賽中完全壓制了對面的明星選手，打出了自己的名氣。',
+            'g03': '一場教科書般的勝利。你們的運營和決策讓解說們讚不絕口。', 'g04': '你們的ADC選手在這場比賽中火力全開，拿下了五殺！他登上了本週的精彩集錦。',
+            'g05': '擊敗了衛冕冠軍！整個聯賽都為之震動，你們現在是冠軍的有力爭奪者！', 'g06': '你們展現了多樣的戰術風格，讓對手難以針對。你們的教練團隊功不可沒。',
+            'g07': '這場比賽後，你們正式鎖定了季後賽席位，並且是上半區的種子隊伍。', 'g08': '你們的對手是一支經驗豐富的老牌隊伍，但你們用更快的節奏擊敗了他們。',
+            'g09': '擊敗了賽區頭號種子！現在，你們才是最強的！只剩下最後的決賽了！', 'g10': '國內冠軍！你們是這個賽區最強的隊伍！贊助商和粉絲蜂擁而至，而你們的下一個目標是——世界！',
+            'w01': '世界賽首勝！面對來自海外的強敵，你們頂住了壓力。這不僅是為隊伍，更是為整個賽區贏得的榮譽。', 'w02': '你們闖入了四強！離那個最高的舞台越來越近，整個賽區的粉絲都在為你們加油！',
+            'w03': '決賽！你們做到了！你們的名字將在決賽的舞台上響起，對手是統治了賽場多年的傳奇魔王！', 'w04': '世界冠軍！你們的名字將被永遠銘刻在峽谷的歷史中！彩帶為你飄揚，世界為你喝彩，你們是當之無愧的傳奇！'
+        };
+        
+        const POSITIONS = ['TOP', 'JGL', 'MID', 'ADC', 'SUP'];
+        let gameState;
+
+        // --- Game Logic ---
+        
+        function createPlayerCardHTML(player, context = 'bench') {
+            if (!player) return '';
+            const rarity = player.id.match(/[a-zA-Z]+/)[0].toUpperCase();
+            
+            let actionButtons = '';
+            const trainBtn = `<button class="roster-action-btn" onclick="trainPlayer('${player.instanceId}')" ${player.level >= player.maxLevel ? 'disabled' : ''}>訓練</button>`;
+            if(context === 'bench') {
+                actionButtons = `<button class="roster-action-btn" onclick="rosterAction('${player.instanceId}', 'toRoster')">升至主力</button>${trainBtn}`;
+            } else if (context === 'roster') {
+                 actionButtons = `<button class="roster-action-btn" onclick="rosterAction('${player.instanceId}', 'toBench')">下放替補</button>${trainBtn}`;
+            }
+
+            return `
+                <div class="player-card-wrapper">
+                    <div class="player-card rarity-${rarity}" data-id="${player.instanceId}">
+                        <div class="position">${player.pos}</div>
+                        <div class="ovr">${player.ovr}</div>
+                        <div class="name">${player.name} <span class="level">(Lv.${player.level})</span></div>
+                        <div class="year">${player.year || 'Rookie'}</div>
+                        <div class="rarity-label rarity-${rarity}">${rarity}</div>
+                        <div class="stats">
+                            <span>OP: ${player.op}</span>
+                            <span>GS: ${player.gs}</span>
+                            <span>MT: ${player.mt}</span>
+                        </div>
+                        <div class="trait ${player.trait.type}">
+                            <span class="trait-name">${player.trait.key}</span>
+                            <p>${player.trait.desc}</p>
+                        </div>
+                    </div>
+                    <div class="roster-actions">${actionButtons}</div>
+                </div>
+            `;
+        }
+        
+        function trainPlayer(instanceId) {
+            const player = gameState.players.find(p => p.instanceId === instanceId);
+            if (!player) return;
+
+            if (player.level >= player.maxLevel) {
+                alert(`${player.name} 已達到最高等級!`);
+                return;
+            }
+
+            const cost = Math.floor(200 * Math.pow(player.level, 1.8));
+            if (gameState.gold < cost) {
+                alert(`金幣不足！升級需要 ${cost} 金幣。`);
+                return;
+            }
+            
+            if (confirm(`確定要花費 ${cost} 金幣將 ${player.name} 升至 ${player.level + 1} 級嗎？`)) {
+                gameState.gold -= cost;
+                player.level++;
+                
+                player.op += 1;
+                player.gs += 1;
+                player.mt += 1;
+                
+                const baseOvr = Math.floor((player.op + player.gs + player.mt) / 3);
+                player.ovr = baseOvr + Math.floor(player.level * 1.2);
+                
+                updateUI();
+                saveGame();
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('gold-amount').textContent = gameState.gold;
+            document.getElementById('diamond-amount').textContent = gameState.diamonds;
+            document.getElementById('team-name').textContent = gameState.teamName;
+
+            const mainRosterContainer = document.getElementById('main-roster-slots');
+            const benchContainer = document.getElementById('bench-slots');
+            mainRosterContainer.innerHTML = '';
+            benchContainer.innerHTML = '';
+
+            POSITIONS.forEach(pos => {
+                const playerId = gameState.roster[pos];
+                if(playerId) {
+                    const player = gameState.players.find(p => p.instanceId === playerId);
+                    mainRosterContainer.innerHTML += createPlayerCardHTML(player, 'roster');
+                } else {
+                    mainRosterContainer.innerHTML += `<div class="roster-placeholder">${pos}</div>`;
+                }
+            });
+            
+            (gameState.bench || []).forEach(playerId => {
+                 const player = gameState.players.find(p => p.instanceId === playerId);
+                 if(player) benchContainer.innerHTML += createPlayerCardHTML(player, 'bench');
+            });
+            
+            calculateTeamOVR();
+
+            const leagueContainer = document.getElementById('league-opponents');
+            const leagueHeader = document.getElementById('league-header');
+            const currentLeagueData = LEAGUES[gameState.currentLeague];
+            
+            if (currentLeagueData) {
+                leagueHeader.textContent = currentLeagueData.name;
+                leagueContainer.innerHTML = '';
+                
+                const nextOpponentId = currentLeagueData.opponents.find(opp => (gameState.leagueProgress[gameState.currentLeague] || []).includes(opp.id))?.id;
+
+                currentLeagueData.opponents.forEach(opp => {
+                    const isPlayed = !(gameState.leagueProgress[gameState.currentLeague] || []).includes(opp.id);
+                    const isLocked = !isPlayed && opp.id !== nextOpponentId;
+                    
+                    let btnHTML;
+                    if(isPlayed) {
+                        btnHTML = `<button class="play-match-btn replay-btn" onclick="prepareMatch('${opp.id}')">再次挑戰</button>`;
+                    } else {
+                        btnHTML = `<button class="play-match-btn" ${isLocked ? 'disabled' : ''} onclick="prepareMatch('${opp.id}')">開始對戰</button>`;
+                    }
+
+                    leagueContainer.innerHTML += `
+                        <div class="league-opponent" style="opacity: ${isLocked ? 0.5 : 1}">
+                            <div>
+                                <h4>${opp.name}</h4>
+                                <p>評分: ${opp.ovr}</p>
+                            </div>
+                            ${btnHTML}
+                        </div>
+                    `;
+                });
+            } else {
+                 leagueHeader.textContent = '傳奇殿堂';
+                 leagueContainer.innerHTML = `<div id="all-leagues-cleared"><h3>恭喜你！</h3><p>你已戰勝所有聯賽，成為了真正的傳奇經理人！</p></div>`;
+            }
+        }
+        
+        function rosterAction(instanceId, action) {
+            const player = gameState.players.find(p => p.instanceId === instanceId);
+            if (!player) return;
+
+            if (action === 'toRoster') {
+                if (!gameState.roster[player.pos]) {
+                    gameState.roster[player.pos] = instanceId;
+                    gameState.bench = gameState.bench.filter(id => id !== instanceId);
+                } else {
+                    const playerInRosterId = gameState.roster[player.pos];
+                    gameState.bench.push(playerInRosterId);
+                    gameState.roster[player.pos] = instanceId;
+                    gameState.bench = gameState.bench.filter(id => id !== instanceId);
+                }
+            } else if (action === 'toBench') {
+                gameState.bench.push(instanceId);
+                gameState.roster[player.pos] = null;
+            }
+            updateUI();
+            saveGame();
+        }
+
+        function calculateTeamOVR() {
+            let totalOvr = 0;
+            for (const pos in gameState.roster) {
+                const playerId = gameState.roster[pos];
+                if (playerId) {
+                    const player = gameState.players.find(p => p.instanceId === playerId);
+                    if(player) totalOvr += player.ovr;
+                }
+            }
+            document.getElementById('team-ovr').textContent = totalOvr;
+            return totalOvr;
+        }
+
+        function recruitPlayer(type) {
+            let newPlayerPool;
+            if (type === 'basic') {
+                if (gameState.gold < 1000) { alert('金幣不足!'); return; }
+                gameState.gold -= 1000;
+                newPlayerPool = Math.random() < 0.9 ? DB.C : DB.R;
+            } else if (type === 'premium') {
+                if (gameState.diamonds < 500) { alert('鑽石不足!'); return; }
+                gameState.diamonds -= 500;
+                const roll = Math.random();
+                if (roll < 0.6) newPlayerPool = DB.R;
+                else if (roll < 0.95) newPlayerPool = DB.SR;
+                else newPlayerPool = DB.SSR;
+            } else { return; }
+            
+            const newPlayer = { ...newPlayerPool[Math.floor(Math.random() * newPlayerPool.length)] };
+            const resultContainer = document.getElementById('recruit-result');
+            const isDuplicate = gameState.players.some(p => p.id === newPlayer.id);
+
+            if (isDuplicate) {
+                let compensationMsg = `抽到重覆選手 ${newPlayer.name}!`;
+                const rarity = newPlayer.id.match(/[a-zA-Z]+/)[0].toUpperCase();
+                switch (rarity) {
+                    case 'C': gameState.gold += 200; compensationMsg += ' 已自動轉換為 200 金幣。'; break;
+                    case 'R': gameState.gold += 500; compensationMsg += ' 已自動轉換為 500 金幣。'; break;
+                    case 'SR': gameState.diamonds += 50; compensationMsg += ' 已自動轉換為 50 鑽石！'; break;
+                    case 'SSR': gameState.diamonds += 250; compensationMsg += ' 已自動轉換為 250 鑽石！'; break;
+                }
+                resultContainer.innerHTML = `<p>${compensationMsg}</p>`;
+            } else {
+                newPlayer.instanceId = 'p_' + Date.now();
+                const rarity = newPlayer.id.match(/[a-zA-Z]+/)[0].toUpperCase();
+                newPlayer.level = 1;
+                if(rarity === 'C') newPlayer.maxLevel = 10;
+                else if(rarity === 'R') newPlayer.maxLevel = 20;
+                else if(rarity === 'SR') newPlayer.maxLevel = 30;
+                else if(rarity === 'SSR') newPlayer.maxLevel = 40;
+                
+                gameState.players.push(newPlayer);
+                gameState.bench.push(newPlayer.instanceId);
+                resultContainer.innerHTML = `<div class="card-reveal">${createPlayerCardHTML(newPlayer, 'recruit')}</div>`;
+            }
+            
+            updateUI();
+            saveGame();
+        }
+        
+        let currentOpponent = null;
+        let selectedTactic = null;
+
+        function prepareMatch(opponentId) {
+            const mainRosterPlayers = Object.values(gameState.roster).filter(id => id !== null);
+            if(mainRosterPlayers.length < 5) {
+                alert('主力陣容不完整 (需要5名選手)!');
+                return;
+            }
+            currentOpponent = LEAGUES[gameState.currentLeague].opponents.find(o => o.id == opponentId);
+            currentOpponent.isReplay = !gameState.leagueProgress[gameState.currentLeague].includes(currentOpponent.id);
+
+            document.getElementById('match-modal-title').textContent = `VS ${currentOpponent.name}`;
+            selectedTactic = null;
+            document.querySelectorAll('.tactic-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById('start-match-btn').disabled = true;
+            document.getElementById('match-modal').style.display = 'flex';
+        }
+        
+        function simulateMatch() {
+            document.getElementById('match-modal').style.display = 'none';
+
+            let playerPower = calculateTeamOVR();
+            let opponentPower = currentOpponent.ovr;
+            
+            const tacticMap = { 'Aggressive Early': 'Resource Control', 'Safe Farming': 'Aggressive Early', 'Resource Control': 'Safe Farming' };
+            if(tacticMap[selectedTactic] === currentOpponent.tactic) playerPower *= 1.1;
+            else if (tacticMap[currentOpponent.tactic] === selectedTactic) playerPower *= 0.9;
+
+            Object.values(gameState.roster).forEach(pid => {
+                if(!pid) return;
+                const p = gameState.players.find(p => p.instanceId === pid);
+                if(p && p.trait.key === '[不死的魔王]') playerPower *= 1.05;
+                if(p && p.trait.key === '[天神下凡]') opponentPower *= 0.9;
+            });
+
+            playerPower *= (0.95 + Math.random() * 0.1);
+            
+            const victory = playerPower > opponentPower;
+            const mvp = Object.values(gameState.roster).map(pid => gameState.players.find(p => p.instanceId === pid)).filter(Boolean).sort((a,b) => b.ovr - a.ovr)[0].name;
+
+            const resultModal = document.getElementById('match-result-modal');
+            const resultTitle = document.getElementById('result-title');
+            let storyText = '';
+            
+            if (victory) {
+                if(currentOpponent.isReplay) {
+                    resultTitle.textContent = '再次勝利 (VICTORY)';
+                    const goldWon = 500 + Math.floor(Math.random() * 500);
+                    gameState.gold += goldWon;
+                    document.getElementById('result-rewards-text').textContent = `金幣 +${goldWon}`;
+                    storyText = '又一次輕鬆的勝利，為之後的硬仗累積了寶貴的資源。';
+                } else {
+                    resultTitle.textContent = '勝利 (VICTORY)';
+                    const goldWon = 2000 + Math.floor(Math.random() * 1000);
+                    const diaWon = 500;
+                    gameState.gold += goldWon;
+                    gameState.diamonds += diaWon;
+                    document.getElementById('result-rewards-text').textContent = `金幣 +${goldWon}, 鑽石 +${diaWon}`;
+                    storyText = STORY_TEXT[currentOpponent.id] || '';
+
+                    gameState.leagueProgress[gameState.currentLeague] = gameState.leagueProgress[gameState.currentLeague].filter(id => id !== currentOpponent.id);
+                    
+                    if (gameState.leagueProgress[gameState.currentLeague].length === 0) {
+                        const leagueOrder = Object.keys(LEAGUES);
+                        const currentLeagueIndex = leagueOrder.indexOf(gameState.currentLeague);
+                        const nextLeagueKey = leagueOrder[currentLeagueIndex + 1];
+                        if (nextLeagueKey) {
+                            gameState.currentLeague = nextLeagueKey;
+                        } else {
+                            gameState.currentLeague = null;
+                        }
+                    }
+                }
+                resultTitle.className = 'result-title victory';
+            } else {
+                resultTitle.textContent = '失敗 (DEFEAT)';
+                resultTitle.className = 'result-title defeat';
+                const goldWon = 500 + Math.floor(Math.random() * 200);
+                gameState.gold += goldWon;
+                document.getElementById('result-rewards-text').textContent = `金幣 +${goldWon}`;
+                storyText = '一次艱難的失敗。重整旗鼓，分析不足，下次再戰勝他們！';
+            }
+            
+            document.getElementById('story-text').textContent = storyText;
+            document.getElementById('result-score').textContent = `Kills ${Math.round(15 + (playerPower - opponentPower)/20)} : ${Math.round(15 - (playerPower - opponentPower)/20)}`;
+            document.getElementById('result-mvp').textContent = mvp;
+            resultModal.style.display = 'flex';
+            
+            saveGame();
+            updateUI();
+        }
+
+        function setupEventListeners() {
+            document.querySelectorAll('.nav-button:not(#reset-game-btn)').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.nav-button.active').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.querySelector('.screen.active').classList.remove('active');
+                    document.getElementById(btn.dataset.screen + '-screen').classList.add('active');
+                });
+            });
+            
+            document.getElementById('team-name').addEventListener('click', () => {
+                const newName = prompt("請輸入新的隊伍名稱:", gameState.teamName);
+                if(newName && newName.trim()) { gameState.teamName = newName.trim(); updateUI(); saveGame(); }
+            });
+
+            document.getElementById('recruit-basic').addEventListener('click', () => recruitPlayer('basic'));
+            document.getElementById('recruit-premium').addEventListener('click', () => recruitPlayer('premium'));
+
+            document.querySelectorAll('.tactic-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tactic-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    selectedTactic = btn.dataset.tactic;
+                    document.getElementById('start-match-btn').disabled = false;
+                });
+            });
+            
+            document.getElementById('start-match-btn').addEventListener('click', simulateMatch);
+            document.getElementById('close-result-modal-btn').addEventListener('click', () => {
+                document.getElementById('match-result-modal').style.display = 'none';
+            });
+            
+            document.getElementById('reset-game-btn').addEventListener('click', () => {
+                if (confirm("你確定要重設所有遊戲記錄嗎？此操作無法復原。")) {
+                    localStorage.removeItem('canyonManagerSave');
+                    location.reload();
+                }
+            });
+        }
+        
+        function saveGame() {
+            localStorage.setItem('canyonManagerSave', JSON.stringify(gameState));
+        }
+
+        function getNewGameState() {
+            const leagueKeys = Object.keys(LEAGUES);
+            const initialProgress = {};
+            leagueKeys.forEach(key => {
+                initialProgress[key] = LEAGUES[key].opponents.map(o => o.id);
+            });
+
+            const newState = {
+                teamName: 'My Team', gold: 10000, diamonds: 5000, players: [], bench: [],
+                roster: { 'TOP': null, 'JGL': null, 'MID': null, 'ADC': null, 'SUP': null },
+                currentLeague: 'Bronze',
+                leagueProgress: initialProgress
+            };
+            const starters = [
+                {...DB.C[0], instanceId: 'p_starter1'}, {...DB.C[2], instanceId: 'p_starter2'},
+                {...DB.C[4], instanceId: 'p_starter3'}, {...DB.C[6], instanceId: 'p_starter4'},
+                {...DB.C[8], instanceId: 'p_starter5'}
+            ];
+            starters.forEach(p => {
+                p.level = 1;
+                const rarity = p.id.match(/[a-zA-Z]+/)[0].toUpperCase();
+                if(rarity === 'C') p.maxLevel = 10;
+                else if(rarity === 'R') p.maxLevel = 20;
+            });
+            newState.players.push(...starters);
+            newState.roster = {
+                'TOP': starters[0].instanceId, 'JGL': starters[1].instanceId, 'MID': starters[2].instanceId,
+                'ADC': starters[3].instanceId, 'SUP': starters[4].instanceId,
+            };
+            return newState;
+        }
+
+        function loadGame() {
+            const savedState = localStorage.getItem('canyonManagerSave');
+            if (savedState) {
+                gameState = JSON.parse(savedState);
+                if (!gameState.currentLeague) gameState.currentLeague = 'Bronze';
+                if (!gameState.leagueProgress || !gameState.leagueProgress.Bronze || gameState.leagueProgress.Bronze.length < 10) {
+                     const newProgress = getNewGameState().leagueProgress;
+                     gameState.leagueProgress = newProgress;
+                     gameState.currentLeague = 'Bronze';
+                }
+                gameState.players.forEach(p => {
+                     if (!p.hasOwnProperty('level')) {
+                        p.level = 1;
+                        const rarity = p.id.match(/[a-zA-Z]+/)[0].toUpperCase();
+                        if(rarity === 'C') p.maxLevel = 10;
+                        else if(rarity === 'R') p.maxLevel = 20;
+                        else if(rarity === 'SR') p.maxLevel = 30;
+                        else if(rarity === 'SSR') p.maxLevel = 40;
+                     }
+                });
+            } else {
+                gameState = getNewGameState();
+            }
+        }
+
+        function init() {
+            loadGame();
+            setupEventListeners();
+            updateUI();
+        }
+
+        init();
+    </script>
+</body>
+</html>
